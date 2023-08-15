@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { LineOfBusiness } from '../LineOfBusiness';
 import { LineOfBusinessService } from '../lineOfBusiness.service';
+import { InMemoryDataService } from '../in-memory-data.service';
 
 @Component({
   selector: 'app-dashboard',
@@ -10,14 +11,32 @@ import { LineOfBusinessService } from '../lineOfBusiness.service';
 export class DashboardComponent implements OnInit {
   linesOfBusiness: LineOfBusiness[] = [];
 
-  constructor(private lineOfBusinessService: LineOfBusinessService) { }
+  constructor(
+    private lineOfBusinessService: LineOfBusinessService,
+    private inMemoryDataService: InMemoryDataService 
+  ) { }
 
   ngOnInit() {
-    this.getLinesOfBusiness();
+    this.getPopularLinesOfBusiness();
   }
 
-  getLinesOfBusiness(): void {
+  getPopularLinesOfBusiness(): void {
     this.lineOfBusinessService.getLinesOfBusiness()
-      .subscribe(linesOfBusiness => this.linesOfBusiness = linesOfBusiness.slice(1, 4));
+      .subscribe(allLines => {
+        const lineFrequency: { [key: number]: number } = {};
+
+        const recentQuotes = this.inMemoryDataService.getRecentQuotes();
+
+        recentQuotes.forEach(quote => {
+          if (lineFrequency.hasOwnProperty(quote.lineOfBusiness)) {
+            lineFrequency[quote.lineOfBusiness]++;
+          } else {
+            lineFrequency[quote.lineOfBusiness] = 1;
+          }
+        });
+
+        const sortedLines = allLines.sort((a, b) => lineFrequency[b.id] - lineFrequency[a.id]);
+        this.linesOfBusiness = sortedLines.slice(0, 2);
+      });
   }
 }

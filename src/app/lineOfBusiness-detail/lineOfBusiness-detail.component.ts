@@ -4,6 +4,8 @@ import { Location } from '@angular/common';
 
 import { LineOfBusiness } from '../LineOfBusiness';
 import { LineOfBusinessService } from '../lineOfBusiness.service';
+import { InMemoryDataService } from '../in-memory-data.service';
+
 
 @Component({
   selector: 'app-lineOfBusiness-detail',
@@ -12,10 +14,12 @@ import { LineOfBusinessService } from '../lineOfBusiness.service';
 })
 export class LineOfBusinessDetailComponent implements OnInit {
   lineOfBusiness: LineOfBusiness | undefined;
+  quoteFrequency: number = 0;
 
   constructor(
     private route: ActivatedRoute,
     private lineOfBusinessService: LineOfBusinessService,
+    private inMemoryDataService: InMemoryDataService,
     private location: Location
   ) {}
 
@@ -25,8 +29,11 @@ export class LineOfBusinessDetailComponent implements OnInit {
 
   getLineOfBusiness(): void {
     const id = parseInt(this.route.snapshot.paramMap.get('id')!, 10);
-    this.lineOfBusinessService.getLineOfBusiness(id)
-      .subscribe(lineOfBusiness => this.lineOfBusiness = lineOfBusiness);
+    this.lineOfBusinessService.getLineOfBusiness(id).subscribe(lineOfBusiness => {
+      this.lineOfBusiness = lineOfBusiness;
+      const recentQuotes = this.inMemoryDataService.getRecentQuotes();
+      this.quoteFrequency = recentQuotes.filter(quote => quote.lineOfBusiness === id).length;
+    });
   }
 
   goBack(): void {
